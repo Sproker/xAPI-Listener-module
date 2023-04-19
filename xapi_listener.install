@@ -28,7 +28,7 @@ function xapi_listener_schema() {
       'qtitle' => [
         'type' => 'varchar',
         'length' => 255,
-        'not null' => FALSE,
+        'not null' => TRUE,
         'description' => 'The title of the quiz.',
       ],
       'qqid' => [
@@ -46,14 +46,30 @@ function xapi_listener_schema() {
         'unsigned' => TRUE,
       ],
       'score_raw' => [
-        'type' => 'float',
+        'type' => 'int',
+        'length' => 10,
         'not null' => TRUE,
         'description' => 'Raw score achieved by the user.',
+        'unsigned' => TRUE,
       ],
       'score_max' => [
-        'type' => 'float',
+        'type' => 'int',
+        'length' => 10,
         'not null' => TRUE,
         'description' => 'Maximum score that could be achieved by the user.',
+        'unsigned' => TRUE,
+      ],
+      'duration' => [
+        'type' => 'float',
+        'not null' => TRUE,
+        'description' => 'The time it took the user to complete the question.',
+      ],
+      'attempts' => [
+        'type' => 'int',
+        'length' => 10,
+        'not null' => TRUE,
+        'description' => 'The number of attempts for the question.',
+        'unsigned' => TRUE,
       ],
       'created' => [
         'type' => 'int',

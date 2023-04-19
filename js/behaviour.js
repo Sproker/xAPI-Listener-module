@@ -16,39 +16,39 @@
           const getQuestionId = $('[id^="edit-question-"]').attr('id');
           questionId = parseInt(getQuestionId.match(/\d+/)[0]);
         }
+
         H5P.externalDispatcher.on('xAPI', function (event) {
-          const statement = event.data.statement;
-          const subContentId = statement.object.definition?.extensions?.["http://h5p.org/x-api/h5p-subContentId"];
-          if (statement.verb.id === "http://adlnet.gov/expapi/verbs/completed") {
-            if (!subContentId) {
-              console.log('Completed column/quiz content type');
-              processStatement(statement);
-            }
-          } else if (statement.verb.id === "http://adlnet.gov/expapi/verbs/answered" && !subContentId) {
-            console.log('Regulat content');
-            processStatement(statement);
+          if ((event.getVerb() === 'completed' || event.getVerb() === 'answered')
+            && !event.getVerifiedStatementValue(['object', 'definition', 'extensions', 'http://h5p.org/x-api/h5p-subContentId'])) {
+            processStatement(event.getScore(), event.getMaxScore(), event.getVerifiedStatementValue(['result', 'duration']));
           }
         });
 
-        function processStatement(statement) {
-          if (statement.result) {
-            statements.push({
-              qid: quizId,
-              qqid: questionId,
-              score: statement.result.score.raw,
-              max: statement.result.score.max,
-            });
+        function processStatement(score, max, duration) {
+          statements.push({
+            qid: quizId,
+            qqid: questionId,
+            score: score,
+            max: max,
+            duration: duration
+          });
+        }
+
+        $('#edit-navigation-submit').on('click', function (event) {
+          if (statements.length > 0) {
+            event.preventDefault();
+            const finalStatement = statements[statements.length - 1];
             $.ajax({
               url: moduleSettings.endpointUrl,
               type: 'POST',
               contentType: 'application/json',
-              data: JSON.stringify(statements),
-              success: function() {
-                statements = [];
+              data: JSON.stringify(finalStatement),
+              success: function () {
+                $('#quiz-question-answering-form').submit();
               }
             });
           }
-        }
+        });
       }
     },
   };

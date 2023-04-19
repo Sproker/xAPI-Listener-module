@@ -2,6 +2,7 @@
 
 namespace Drupal\xapi_listener;
 
+use DateInterval;
 use Drupal;
 use Drupal\Core\Database\Connection;
 
@@ -32,31 +33,41 @@ class ListenerService
   /**
    * Log statements to the database.
    *
-   * @param array $statements
+   * @param array $statement
    *   The statements to log.
    */
-  public function logStatements(array $statements)
+  public function logStatements(array $statement)
   {
-    foreach ($statements as $statement) {
-      $qtitle = $this->database->select('quiz', 'q')
-        ->fields('q', ['title'])
-        ->condition('qid', $statement['qid'])
-        ->execute()
-        ->fetchField();
+    $qtitle = $this->database->select('quiz', 'q')
+      ->fields('q', ['title'])
+      ->condition('qid', $statement['qid'])
+      ->execute()
+      ->fetchField();
 
-      $this->database->merge('xapi_listener_statements')
-        ->key([
-          'qid' => $statement['qid'],
-          'qqid' => $statement['qqid'],
-          'uid' => Drupal::currentUser()->id(),
-        ])
-        ->fields([
-          'qtitle' => $qtitle,
-          'score_raw' => $statement['score'],
-          'score_max' => $statement['max'],
-          'created' => Drupal::time()->getRequestTime(),
-        ])
-        ->execute();
-    }
+    $existing_record = $this->database->select('xapi_listener_statements', 's')
+      ->fields('s', ['attempts'])
+      ->condition('qid', $statement['qid'])
+      ->condition('qqid', $statement['qqid'])
+      ->condition('uid', Drupal::currentUser()->id())
+      ->execute()
+      ->fetchAssoc();
+
+    $attempts = $existing_record ? $existing_record['attempts'] + 1 : 1;
+    preg_match('/\d+\.\d+S/', $statement['duration'], $matches);
+    $duration_formatted = (float) rtrim($matches[0], 'S');
+
+    $this->database->insert('xapi_listener_statements')
+      ->fields([
+        'qid' => $statement['qid'],
+        'qqid' => $statement['qqid'],
+        'uid' => Drupal::currentUser()->id(),
+        'qtitle' => $qtitle,
+        'score_raw' => $statement['score'],
+        'score_max' => $statement['max'],
+        'duration' => $duration_formatted,
+        'attempts' => $attempts,
+        'created' => Drupal::time()->getRequestTime(),
+      ])
+      ->execute();
   }
 }
