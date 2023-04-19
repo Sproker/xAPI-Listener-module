@@ -55,11 +55,13 @@ class ListenerService
     preg_match('/\d+\.\d+S/', $statement['duration'], $matches);
     $duration_formatted = (float) rtrim($matches[0], 'S');
 
-    $this->database->insert('xapi_listener_statements')
-      ->fields([
+    $this->database->merge('xapi_listener_statements')
+      ->key([
         'qid' => $statement['qid'],
         'qqid' => $statement['qqid'],
         'uid' => Drupal::currentUser()->id(),
+      ])
+      ->fields([
         'qtitle' => $qtitle,
         'score_raw' => $statement['score'],
         'score_max' => $statement['max'],
