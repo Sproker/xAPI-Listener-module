@@ -2,7 +2,6 @@
 
 namespace Drupal\xapi_listener;
 
-use DateInterval;
 use Drupal;
 use Drupal\Core\Database\Connection;
 
